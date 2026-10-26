@@ -1,0 +1,53 @@
+{
+  "realm": "battery",
+  "enabled": true,
+  "accessTokenLifespan": 600,
+  "roles": {
+    "realm": [
+      { "name": "seller", "description": "Allowed to register batteries and create listings" },
+      { "name": "buyer", "description": "Allowed to buy batteries" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "battery-frontend",
+      "name": "Battery Marketplace Frontend",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["http://localhost:4200/*"],
+      "webOrigins": ["http://localhost:4200"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:4200/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-passport",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "passport",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "demo",
+      "enabled": true,
+      "email": "demo@example.com",
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "User",
+      "credentials": [
+        { "type": "password", "value": "demo", "temporary": false }
+      ],
+      "realmRoles": ["seller", "buyer"]
+    }
+  ]
+}
