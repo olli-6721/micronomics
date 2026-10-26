@@ -1,0 +1,3 @@
+CREATE USER passport WITH PASSWORD 'passport';
+CREATE DATABASE passport OWNER passport;
+REVOKE CONNECT ON DATABASE passport FROM PUBLIC;

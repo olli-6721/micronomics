@@ -1,0 +1,73 @@
+name: battery-marketplace
+
+x-symfony-build: &symfony-build
+  context: .
+  dockerfile: docker/symfony/Dockerfile
+
+x-symfony-php: &symfony-php
+  user: "${UID:-1000}:${GID:-1000}"
+  extra_hosts:
+    - host.docker.internal:host-gateway
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  passport-php:
+    <<: *symfony-php
+    build:
+      <<: *symfony-build
+      target: php_dev
+      args:
+        SERVICE_DIR: passport
+    volumes:
+      - ./passport:/srv/app
+    environment:
+      APP_ENV: dev
+      DATABASE_URL: postgresql://passport:passport@postgres:5432/passport?serverVersion=18&charset=utf8
+      XDEBUG_MODE: ${XDEBUG_MODE:-off}
+      XDEBUG_CONFIG: client_host=host.docker.internal
+      PHP_IDE_CONFIG: serverName=passport
+
+  passport-web:
+    build:
+      <<: *symfony-build
+      target: web
+      args:
+        SERVICE_DIR: passport
+    environment:
+      PHP_UPSTREAM: passport-php:9000
+    volumes:
+      - ./passport/public:/srv/app/public:ro
+    ports:
+      - "8081:80"
+    depends_on:
+      - passport-php
+
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  adminer:
+    image: adminer:5
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres-data:
